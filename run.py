@@ -7,9 +7,9 @@ import numpy as np
 WIDTH = 1000
 HEIGH = 600
 BORDER = 10
-RADIUS = 10
+RADIUS = 20
 VELOCITY = 1
-FRAMERATE = 400
+FRAMERATE = 200
 PADDLEW = 100
 PADDLEH = 20
 END = False
@@ -99,7 +99,7 @@ def collision_ball_paddle(ball, paddle):
         return True, p
     else:
         return False, 0
- 
+
 def calculate_velocity(x1, y1, x2, y2, vx, vy, p, w=0, h=0):  #x1, y1 je krug
     if p == 1:
         return vx, -vy
@@ -123,7 +123,7 @@ def calculate_velocity(x1, y1, x2, y2, vx, vy, p, w=0, h=0):  #x1, y1 je krug
         vx = d = math.sqrt((w - x2)**2) * koef
         vy = math.sqrt((np.polyval(p, w) - y2)**2) * koef
         return -vx, -vy
-    elif p == 5:        #NEISPITANO
+    elif p == 5:
         fx1 = np.array([x1, x2])
         fy1 = np.array([y1, y2 + h])
         p = lb.lagrange_interpolation(fx1, fy1)
@@ -147,13 +147,28 @@ def calculate_velocity(x1, y1, x2, y2, vx, vy, p, w=0, h=0):  #x1, y1 je krug
 def level():
     list = []
     x = np.linspace(50, WIDTH - BORDER - BRICKW - 50, 5)
-    print(x)
     for i in range(len(x)):
         brick = Brick(x[i], 50)
         list.append(brick)
-        print(list[0].x, list[0].y, list[0].h)
     return list
 
+def spaceBricks(bricks):
+    maxx = 0
+    maxy = 0
+    minx = WIDTH
+    miny = HEIGH
+
+    for i in range(len(bricks)):
+        if(bricks[i].x + bricks[i].w > maxx):
+            maxx = bricks[i].x + bricks[i].w
+        if(bricks[i].x < minx):
+            minx = bricks[i].x
+        if(bricks[i].y + bricks[i].h > maxy):
+            maxy = bricks[i].y + bricks[i].h
+        if(bricks[i].y < miny):
+            miny = bricks[i].y
+
+    return minx, maxx, miny, maxy
 
 #define classes
 class Ball:
@@ -194,15 +209,22 @@ class Ball:
             if tempy > HEIGH:
                 global END
                 END = True
+                print("Poraz")
+        
         #collision with bricks
-        if tempy < bricks[0].y + bricks[0].h + 150: #TODO nadji min iz bricks
-            for i in range(len(bricks)):
-                is_coll, poss_coll = collision_ball_brick(self, bricks[i])
-                if is_coll:
-                    self.vx, self.vy = calculate_velocity(tempx, tempy, bricks[i].x, bricks[i].y, self.vx, self.vy, poss_coll, bricks[i].w)
-                    bricks[i].show_and_update(bg_color)
-                    bricks.remove(bricks[i])
-                    break
+        if(len(bricks) != 0):
+            minx, maxx, miny, maxy = spaceBricks(bricks)
+            if tempx > minx - self.r - 1 and tempx < maxx + self.r + 1 and tempy > miny - self.r - 1 and tempy < maxy + self.r + 1:
+                for i in range(len(bricks)):
+                    is_coll, poss_coll = collision_ball_brick(self, bricks[i])
+                    if is_coll:
+                        self.vx, self.vy = calculate_velocity(tempx, tempy, bricks[i].x, bricks[i].y, self.vx, self.vy, poss_coll, bricks[i].w)
+                        bricks[i].show_and_update(bg_color)
+                        bricks.remove(bricks[i])
+                        break
+        else:
+            END = True
+            print("Pobeda")
 
         self.show(bg_color)
         self.x = self.x + self.vx
