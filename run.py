@@ -1,5 +1,4 @@
 import pygame
-import pymunk
 import math
 import NANS_lib as lb
 import numpy as np
@@ -17,61 +16,67 @@ END = False
 BRICKH = 50
 BRICKW = 120
 IMMUNITY = PADDLEH//2 + 1
+
 #define functions
-def collision_ball_rect(ball, rect):
+def collision_ball_brick(ball, brick):
     '''
-    If collision happen this function returns true and position of ball center, otherwise returns false and 0
+    If a collision between ball and brick occurs this function returns true and position of ball center, otherwise returns false and 0
       3 | 1 | 4
-    -------------
+    ------------
       2 |   | 2
-    -------------
+    ------------
       5 | 1 | 6
     '''
     
     p = 0
-    tempX = ball.x
-    tempY = ball.y
 
-    if ball.x < rect.x: # 2 or 3 or 5
-        tempX = rect.x
+    if ball.x < brick.x: # 2 or 3 or 5
+        tempX = brick.x
         p = 10
-    elif ball.x > rect.x + rect.w:  # 4 or 2 or 6
-        tempX = rect.x + rect.w
+    elif ball.x > brick.x + brick.w:  # 4 or 2 or 6
+        tempX = brick.x + brick.w
         p = 12
     else:
+        tempX = ball.x
         p = 1
-
-    if ball.y < rect.y: # 3 or 1 or 4
-        tempY = rect.y
-        if p == 10:
-            p = 3
-        elif p == 12:
-            p = 4
-    elif ball.y > rect.y + rect.h: # 5 or 1 or 6
-        tempY = rect.y + rect.h
-        if p == 10:
-            p = 5
-        elif p == 12:
-            p = 6
+    
+    if p != 1:
+        if ball.y < brick.y: # 3 or 1 or 4
+            tempY = brick.y
+            if p == 10:
+                p = 3
+            elif p == 12:
+                p = 4
+        elif ball.y >= brick.y + brick.h: # 5 or 1 or 6
+            tempY = brick.y + brick.h
+            if p == 10:
+                p = 5
+            elif p == 12:
+                p = 6
+        else:
+            tempY = ball.y
+            p = 2
+    elif ball.y < brick.y:
+        tempY = brick.y
     else:
-        p = 2
+        tempY = brick.y + brick.h
 
-    if math.sqrt((tempX - ball.x)**2 + (tempY - ball.y)**2) <= 0:
+
+    if math.sqrt((tempX - ball.x)**2 + (tempY - ball.y)**2) <= ball.r:
         return True, p
     else:
         return False, 0
     
 def collision_ball_paddle(ball, paddle):
     '''
-    If collision happen this function returns true and position of ball center, otherwise returns false and 0
+    If a collision between ball and paddle occurs this function returns true and position of ball center, otherwise returns false and 0
       3 | 1 | 4
     -------------
       2 |   | 2
     '''
     p = 0
 
-    tempX = ball.x
-    tempY = ball.y
+    tempY = paddle.y
 
     if ball.x < paddle.x - paddle.w//2:
         tempX = paddle.x - paddle.w//2
@@ -80,10 +85,11 @@ def collision_ball_paddle(ball, paddle):
         tempX = paddle.x + paddle.w//2
         p = 6
     else:
+        tempX = ball.x
         p = 1
 
     if ball.y < paddle.y:
-        tempY = paddle.y
+        tempY = ball.y
         if p == 5:
             p = 3
         elif p == 6:
@@ -93,10 +99,8 @@ def collision_ball_paddle(ball, paddle):
         return True, p
     else:
         return False, 0
-
-#NECE RADITI LEPO JER NE GLEDAMO U ODNOSU NA KOJE TACNO TEME  
+ 
 def calculate_velocity(x1, y1, x2, y2, vx, vy, p, w=0, h=0):  #x1, y1 je krug
-
     if p == 1:
         return vx, -vy
     elif p == 2:
@@ -106,10 +110,7 @@ def calculate_velocity(x1, y1, x2, y2, vx, vy, p, w=0, h=0):  #x1, y1 je krug
         fy1 = np.array([y1, y2])
         p = lb.lagrange_interpolation(fx1, fy1)
         interscCR = np.polyval(p, 0)
-        koef = math.sqrt(2) / math.sqrt((0 - x2)**2 + (interscCR - y2)**2) 
-        #koef = math.sqrt((x1 - x2)**2 + (y1 - y2)**2) / math.sqrt((0 - x2)**2 + (interscCR - y2)**2) #radijus nije koren iz dva budalo
-        # print(koef)
-        # print(x1, y1, x2, y2)
+        koef = math.sqrt(2) / math.sqrt((0 - x2)**2 + (interscCR - y2)**2)
         vx = math.sqrt((0 - x2)**2) * koef
         vy = math.sqrt((interscCR - y2)**2) * koef
         return -vy, -vx
@@ -128,8 +129,6 @@ def calculate_velocity(x1, y1, x2, y2, vx, vy, p, w=0, h=0):  #x1, y1 je krug
         p = lb.lagrange_interpolation(fx1, fy1)
         interscCR = np.polyval(p, 0)
         koef = math.sqrt(2) / math.sqrt((0 - x2)**2 + (interscCR - y2)**2)
-        print(koef)
-        print(x1, y1, x2, y2)
         vx = math.sqrt((0 - x2)**2) * koef
         vy = math.sqrt((interscCR - y2)**2) * koef
         return -vy, -vx
@@ -145,6 +144,17 @@ def calculate_velocity(x1, y1, x2, y2, vx, vy, p, w=0, h=0):  #x1, y1 je krug
 
     return vx, vy
 
+def level():
+    list = []
+    x = np.linspace(50, WIDTH - BORDER - BRICKW - 50, 5)
+    print(x)
+    for i in range(len(x)):
+        brick = Brick(x[i], 50)
+        list.append(brick)
+        print(list[0].x, list[0].y, list[0].h)
+    return list
+
+
 #define classes
 class Ball:
 
@@ -159,7 +169,7 @@ class Ball:
         global display
         pygame.draw.circle(display, color, (self.x, self.y), self.r)
 
-    def update(self, paddle):
+    def update(self, paddle, bricks):
         global bg_color, fg_color
 
         imm = 0
@@ -180,16 +190,19 @@ class Ball:
 
             if is_coll:
                 self.vx, self.vy = calculate_velocity(tempx, tempy, paddle.x - paddle.w, paddle.y, self.vx, self.vy, poss_coll, paddle.w)
-                print(self.vx, self.vy)
-                # if poss_coll == 1:
-                #     self.vy = - self.vy
-                # elif poss_coll == 3 or poss_coll == 4:
-                #     self.vx = - self.vx
-                #     self.vy = - self.vy
 
             if tempy > HEIGH:
                 global END
                 END = True
+        #collision with bricks
+        if tempy < bricks[0].y + bricks[0].h + 150: #TODO nadji min iz bricks
+            for i in range(len(bricks)):
+                is_coll, poss_coll = collision_ball_brick(self, bricks[i])
+                if is_coll:
+                    self.vx, self.vy = calculate_velocity(tempx, tempy, bricks[i].x, bricks[i].y, self.vx, self.vy, poss_coll, bricks[i].w)
+                    bricks[i].show_and_update(bg_color)
+                    bricks.remove(bricks[i])
+                    break
 
         self.show(bg_color)
         self.x = self.x + self.vx
@@ -218,8 +231,8 @@ class Paddle:
 
 class Brick:
     
-    w = BRICKW
     h = BRICKH
+    w = BRICKW
 
     def __init__(self, x, y):
         self.x = x
@@ -228,10 +241,11 @@ class Brick:
     def show_and_update(self, color):
         global display
         pygame.draw.rect(display, color, pygame.Rect((self.x, self.y), (self.w, self.h)))
-
+        
 #create objects
 paddleplay = Paddle(WIDTH//2)
 ballplay = Ball(WIDTH//2, HEIGH - Ball.r - paddleplay.h - 1, -VELOCITY, -VELOCITY)
+bricks = level()
 
 #Draw scenario
 pygame.init()
@@ -248,6 +262,9 @@ pygame.draw.rect(display, fg_color, pygame.Rect((WIDTH - BORDER, 0), (BORDER, HE
 ballplay.show(fg_color)
 paddleplay.show(fg_color)
 
+for i in range(len(bricks)):
+    bricks[i].show_and_update(fg_color)
+
 clock = pygame.time.Clock()
 
 while not END:
@@ -258,7 +275,7 @@ while not END:
     clock.tick(FRAMERATE)
 
     pygame.display.flip()
-    ballplay.update(paddleplay)
+    ballplay.update(paddleplay, bricks)
     paddleplay.update()
     
 
