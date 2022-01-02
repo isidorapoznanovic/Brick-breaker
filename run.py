@@ -100,6 +100,12 @@ def collision_ball_paddle(ball, paddle):
     else:
         return False, 0
 
+def collision_ball_ball(ball1, ball2):
+    if np.sqrt((ball1.x - ball2.x)**2 + (ball1.y- ball2.y)**2 ) <= ball1.r + ball2.r:
+        return True
+    else:
+        return False
+
 def calculate_velocity(x1, y1, x2, y2, vx, vy, p, w=0, h=0):  #x1, y1 je krug
     if p == 1:
         return vx, -vy
@@ -144,9 +150,12 @@ def calculate_velocity(x1, y1, x2, y2, vx, vy, p, w=0, h=0):  #x1, y1 je krug
 
     return vx, vy
 
+def calculate_velocity_ball_ball(self, ball):
+    pass
+
 def level():
     list = []
-    x = np.linspace(50, WIDTH - BORDER - BRICKW - 50, 5)
+    x = np.linspace(50, WIDTH - BORDER - BRICKW - 50, 3)
     for i in range(len(x)):
         brick = Brick(x[i], 50)
         list.append(brick)
@@ -184,7 +193,7 @@ class Ball:
         global display
         pygame.draw.circle(display, color, (self.x, self.y), self.r)
 
-    def update(self, paddle, bricks):
+    def update(self, paddle, bricks, balls):
         global bg_color, fg_color
 
         imm = 0
@@ -226,6 +235,13 @@ class Ball:
             END = True
             print("Pobeda")
 
+        #collision with balls
+        for i in range(num_balls):
+            if (self != balls[i] and collision_ball_ball(self, balls[i]) == True):
+                calculate_velocity_ball_ball(self, balls[i])
+                self.vx = -self.vx
+                self.vy = -self.vy
+
         self.show(bg_color)
         self.x = self.x + self.vx
         self.y = self.y + self.vy
@@ -263,10 +279,20 @@ class Brick:
     def show_and_update(self, color):
         global display
         pygame.draw.rect(display, color, pygame.Rect((self.x, self.y), (self.w, self.h)))
-        
+
+#parameters
+print("Enter number of balls:")
+num_balls = input()
+num_balls = int(num_balls)
+ 
 #create objects
 paddleplay = Paddle(WIDTH//2)
-ballplay = Ball(WIDTH//2, HEIGH - Ball.r - paddleplay.h - 1, -VELOCITY, -VELOCITY)
+
+balls = []
+for i in range(num_balls):
+    ballplay = Ball(WIDTH//2 - i*2*Ball.r, HEIGH - Ball.r - paddleplay.h - 1 - i*2*Ball.r, -VELOCITY, -VELOCITY)
+    balls.append(ballplay)
+
 bricks = level()
 
 #Draw scenario
@@ -281,7 +307,9 @@ pygame.draw.rect(display, fg_color, pygame.Rect((0,0), (WIDTH, BORDER)))
 pygame.draw.rect(display, fg_color, pygame.Rect((0,0), (BORDER, HEIGH - PADDLEH)))
 pygame.draw.rect(display, fg_color, pygame.Rect((WIDTH - BORDER, 0), (BORDER, HEIGH - PADDLEH)))
 
-ballplay.show(fg_color)
+for i in range(num_balls):
+    balls[i].show(fg_color)
+
 paddleplay.show(fg_color)
 
 for i in range(len(bricks)):
@@ -297,7 +325,8 @@ while not END:
     clock.tick(FRAMERATE)
 
     pygame.display.flip()
-    ballplay.update(paddleplay, bricks)
+    for i in range(num_balls):
+        balls[i].update(paddleplay, bricks, balls)
     paddleplay.update()
     
 
