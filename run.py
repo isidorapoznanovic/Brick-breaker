@@ -9,7 +9,7 @@ HEIGH = 600
 BORDER = 10
 RADIUS = 20
 VELOCITY = 1
-FRAMERATE = 200
+FRAMERATE = 400
 PADDLEW = 100
 PADDLEH = 20
 END = False
@@ -106,7 +106,7 @@ def collision_ball_ball(ball1, ball2):
     else:
         return False
 
-def calculate_velocity(x1, y1, x2, y2, vx, vy, p, w=0, h=0):  #x1, y1 je krug
+def calculate_velocity(x1, y1, x2, y2, vx, vy, p, w, h):  #x1, y1 je krug
     if p == 1:
         return vx, -vy
     elif p == 2:
@@ -117,40 +117,44 @@ def calculate_velocity(x1, y1, x2, y2, vx, vy, p, w=0, h=0):  #x1, y1 je krug
         p = lb.lagrange_interpolation(fx1, fy1)
         interscCR = np.polyval(p, 0)
         koef = math.sqrt(2) / math.sqrt((0 - x2)**2 + (interscCR - y2)**2)
-        vx = math.sqrt((0 - x2)**2) * koef
-        vy = math.sqrt((interscCR - y2)**2) * koef
+        vx = abs(0 - x2) * koef
+        vy = abs(interscCR - y2) * koef
         return -vy, -vx
     elif p == 4:
-        fx1 = np.array([x1,x2+w])
+        x2 = x2 + w
+        fx1 = np.array([x1,x2])
         fy1 = np.array([y1,y2])
         p = lb.lagrange_interpolation(fx1, fy1)
-        interscCR = np.polyval(p, w)
-        koef = math.sqrt(2) / math.sqrt((w - x2)**2 + ( interscCR - y2)**2)
-        vx = d = math.sqrt((w - x2)**2) * koef
-        vy = math.sqrt((np.polyval(p, w) - y2)**2) * koef
-        return -vx, -vy
+        interscCR = np.polyval(p, WIDTH)
+        koef = math.sqrt(2) / math.sqrt((WIDTH - x2)**2 + (interscCR - y2)**2)
+        vx = (WIDTH - x2) * koef
+        vy = (interscCR - y2) * koef
+        return -vy, -vx
     elif p == 5:
+        y2 = y2 + h
         fx1 = np.array([x1, x2])
-        fy1 = np.array([y1, y2 + h])
+        fy1 = np.array([y1, y2])
         p = lb.lagrange_interpolation(fx1, fy1)
         interscCR = np.polyval(p, 0)
         koef = math.sqrt(2) / math.sqrt((0 - x2)**2 + (interscCR - y2)**2)
-        vx = math.sqrt((0 - x2)**2) * koef
-        vy = math.sqrt((interscCR - y2)**2) * koef
+        vx = (0 - x2) * koef
+        vy = (interscCR - y2) * koef
         return -vy, -vx
     elif p == 6:
-        fx1 = np.array([x1,x2+w])
-        fy1 = np.array([y1,y2+h])
+        x2 = x2 + w
+        y2 = y2 + h
+        fx1 = np.array([x1,x2])
+        fy1 = np.array([y1,y2])
         p = lb.lagrange_interpolation(fx1, fy1)
-        interscCR = np.polyval(p, w)
-        koef = math.sqrt(2) / math.sqrt((w - x2)**2 + ( interscCR - y2)**2)
-        vx = d = math.sqrt((w - x2)**2) * koef
-        vy = math.sqrt((np.polyval(p, w) - y2)**2) * koef
-        return -vx, -vy
+        interscCR = np.polyval(p, WIDTH)
+        koef = math.sqrt(2) / math.sqrt((WIDTH - x2)**2 + (interscCR - y2)**2)
+        vx  = -(WIDTH - x2) * koef
+        vy = -(interscCR - y2) * koef
+        return -vy, -vx
 
     return vx, vy
 
-def calculate_velocity_ball_ball(self, ball):
+def calculate_velocity_ball_ball(ball1, ball2):
     pass
 
 def level():
@@ -213,7 +217,7 @@ class Ball:
             is_coll, poss_coll = collision_ball_paddle(self, paddle)
 
             if is_coll:
-                self.vx, self.vy = calculate_velocity(tempx, tempy, paddle.x - paddle.w, paddle.y, self.vx, self.vy, poss_coll, paddle.w)
+                self.vx, self.vy = calculate_velocity(tempx, tempy, paddle.x - paddle.w, paddle.y, self.vx, self.vy, poss_coll, paddle.w, paddle.h)
 
             if tempy > HEIGH:
                 global END
@@ -227,7 +231,7 @@ class Ball:
                 for i in range(len(bricks)):
                     is_coll, poss_coll = collision_ball_brick(self, bricks[i])
                     if is_coll:
-                        self.vx, self.vy = calculate_velocity(tempx, tempy, bricks[i].x, bricks[i].y, self.vx, self.vy, poss_coll, bricks[i].w)
+                        self.vx, self.vy = calculate_velocity(tempx, tempy, bricks[i].x, bricks[i].y, self.vx, self.vy, poss_coll, bricks[i].w, bricks[i].h)
                         bricks[i].show_and_update(bg_color)
                         bricks.remove(bricks[i])
                         break
@@ -240,7 +244,7 @@ class Ball:
             if (self != balls[i] and collision_ball_ball(self, balls[i]) == True):
                 calculate_velocity_ball_ball(self, balls[i])
                 self.vx = -self.vx
-                self.vy = -self.vy
+                self.vy = self.vy
 
         self.show(bg_color)
         self.x = self.x + self.vx
