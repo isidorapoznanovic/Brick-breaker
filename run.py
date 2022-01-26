@@ -15,7 +15,6 @@ PADDLEH = 20
 END = False
 BRICKH = 50
 BRICKW = 120
-IMMUNITY = PADDLEH//2 + 1
 
 #define functions
 def collision_ball_brick(ball, brick):
@@ -101,7 +100,7 @@ def collision_ball_paddle(ball, paddle):
         return False, 0
 
 def collision_ball_ball(ball1, ball2):
-    if np.sqrt((ball1.x - ball2.x)**2 + (ball1.y- ball2.y)**2 ) <= ball1.r + ball2.r:
+    if np.sqrt((ball1.x - ball2.x)**2 + (ball1.y - ball2.y)**2 ) < ball1.r + ball2.r:
         return True
     else:
         return False
@@ -153,9 +152,55 @@ def calculate_velocity(x1, y1, x2, y2, vx, vy, p, w, h):  #x1, y1 je krug
         return -vy, -vx
 
     return vx, vy
-
+#TODO spoji ifove
 def calculate_velocity_ball_ball(ball1, ball2):
-    pass
+    temp = ball1.vx
+    print(ball1.x, ball2.x,ball1.y,ball2.y)
+    if ball1.x < ball2.x and ball1.y < ball2.y:
+        if ball1.vx*ball1.vy < 0:
+            ball1.vx = np.sign(ball1.vx)*abs(ball1.vy)
+            ball1.vy = np.sign(ball1.vy)*abs(temp)
+            return ball1.vx, ball1.vy
+        else:
+            ball1.vx = -np.sign(ball1.vx)*abs(ball1.vy)
+            ball1.vy = -np.sign(ball1.vy)*abs(temp)
+            return ball1.vx, ball1.vy
+    elif ball1.x < ball2.x and ball1.y > ball2.y:
+        if ball1.vx*ball1.vy > 0:
+            ball1.vx = ball1.vy
+            ball1.vy = temp
+            return ball1.vx, ball1.vy
+        else:
+            ball1.vx = -np.sign(ball1.vx)*abs(ball1.vy)
+            ball1.vy = -np.sign(ball1.vy)*abs(temp)
+            return ball1.vx, ball1.vy
+    elif ball1.x > ball2.x and ball1.y < ball2.y:
+        if ball1.vx*ball1.vy > 0:
+            ball1.vx = ball1.vy
+            ball1.vy = temp
+            return ball1.vx, ball1.vy
+        else:
+            ball1.vx = -np.sign(ball1.vx)*abs(ball1.vy)
+            ball1.vy = -np.sign(ball1.vy)*abs(temp)
+            return ball1.vx, ball1.vy
+    elif ball1.x > ball2.x and ball1.y > ball2.y:
+        if ball1.vx*ball1.vy < 0:
+            ball1.vx = np.sign(ball1.vx)*abs(ball1.vy)
+            ball1.vy = np.sign(ball1.vy)*abs(temp)
+            return ball1.vx, ball1.vy
+        else:
+            ball1.vx = -np.sign(ball1.vx)*abs(ball1.vy)
+            ball1.vy = -np.sign(ball1.vy)*abs(temp)
+            return ball1.vx, ball1.vy
+    elif ball1.x == ball2.x:
+       # ball1.vy = -ball1.vy
+        return temp, -ball1.vy
+    elif ball1.y == ball2.y:
+        #ball1.vx = -ball1.vx
+        return -ball1.vx, ball1.vy
+    else:
+        print('kako')
+        return ball1.vx, ball1.vy
 
 def level():
     list = []
@@ -200,8 +245,6 @@ class Ball:
     def update(self, paddle, bricks, balls):
         global bg_color, fg_color
 
-        imm = 0
-
         tempx = self.x + self.vx
         tempy = self.y + self.vy
 
@@ -242,10 +285,9 @@ class Ball:
         #collision with balls
         for i in range(num_balls):
             if (self != balls[i] and collision_ball_ball(self, balls[i]) == True):
-                calculate_velocity_ball_ball(self, balls[i])
-                self.vx = -self.vx
-                self.vy = self.vy
+                self.vx, self.vy = calculate_velocity_ball_ball(self, balls[i])
 
+    def repaint(self):
         self.show(bg_color)
         self.x = self.x + self.vx
         self.y = self.y + self.vy
@@ -331,6 +373,8 @@ while not END:
     pygame.display.flip()
     for i in range(num_balls):
         balls[i].update(paddleplay, bricks, balls)
+    for i in range(num_balls):
+        balls[i].repaint()   
     paddleplay.update()
     
 
