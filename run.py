@@ -202,12 +202,13 @@ def calculate_velocity_ball_ball(ball1, ball2):
         print('kako')
         return ball1.vx, ball1.vy
 
-def level():
+def level(a, b):
     list = []
-    x = np.linspace(50, WIDTH - BORDER - BRICKW - 50, 3)
-    for i in range(len(x)):
-        brick = Brick(x[i], 50)
-        list.append(brick)
+    x = np.linspace(50, WIDTH - BORDER - BRICKW - 50, a)
+    for j in range(b):
+        for i in range(len(x)):
+            brick = Brick(x[i], 50 + 60*j)
+            list.append(brick)
     return list
 
 def spaceBricks(bricks):
@@ -330,7 +331,12 @@ class Brick:
 print("Enter number of balls:")
 num_balls = input()
 num_balls = int(num_balls)
- 
+
+print("Enter number of bricks in the row (1-7)")
+bricks_row = int(input())
+print("Enter number of bricks in the column (1-8)")
+bricks_col = int(input())
+
 #create objects
 paddleplay = Paddle(WIDTH//2)
 
@@ -339,7 +345,7 @@ for i in range(num_balls):
     ballplay = Ball(WIDTH//2 - i*2*Ball.r, HEIGH - Ball.r - paddleplay.h - 1 - i*2*Ball.r, -VELOCITY, -VELOCITY)
     balls.append(ballplay)
 
-bricks = level()
+bricks = level(bricks_row, bricks_col)
 
 #Draw scenario
 pygame.init()
