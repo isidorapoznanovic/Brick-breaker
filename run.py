@@ -4,13 +4,15 @@ import NANS_lib as lb
 import numpy as np
 import argparse
 import time
+import random
 
 #VARIABLRS
 WIDTH = 1000
 HEIGH = 600
 BORDER = 10
 RADIUS = 20
-VELOCITY = 1
+VELOCITY_X = 1
+VELOCITY_Y = 1
 FRAMERATE = 400
 PADDLEW = 100
 PADDLEH = 20
@@ -391,17 +393,19 @@ class Brick:
 
 parser = argparse.ArgumentParser(prog='PROG')
 
-g1 = parser.add_mutually_exclusive_group()
-arg_a = g1.add_argument('-g', action='store_true')
-g1.add_argument('-balls', type=int, default=1, help='Number of balls')
+group = parser.add_mutually_exclusive_group()
+arg = group.add_argument('-g', action='store_true')
+group.add_argument('-balls', type=int, default=1, help='Number of balls')
 
-g2 = parser.add_mutually_exclusive_group()
-g2.add_argument('-rows', type=int, default=4, help="Number of rows")
-g2._group_actions.append(arg_a)
+group1 = parser.add_mutually_exclusive_group()
+group1._group_actions.append(arg)
+group1.add_argument('-rows', type=int, default=4, help="Number of rows")
 
-g3 = parser.add_mutually_exclusive_group()
-g3.add_argument('-cols', type=int, default=5, help="Number of collumns")
-g3._group_actions.append(arg_a)
+group2 = parser.add_mutually_exclusive_group()
+group2._group_actions.append(arg)
+group2.add_argument('-cols', type=int, default=5, help="Number of collumns")
+
+parser.add_argument('-r', action='store_true')
 
 args = parser.parse_args()
 
@@ -412,6 +416,10 @@ scene2 = True
 while not FINAL_END:
     END = False
     WIN = False
+    if args.r:
+        random.seed(time.time())
+        VELOCITY_Y = random.uniform(0, math.sqrt(2))
+        VELOCITY_X = random.choice((-1,1))*math.sqrt(2 - VELOCITY_Y**2)
     paddleplay = Paddle(WIDTH//2)
 
     balls = []
@@ -421,7 +429,7 @@ while not FINAL_END:
         bricks_col = args.cols
 
         for i in range(num_balls):
-            ballplay = Ball(WIDTH//2 - i*2*Ball.r, HEIGH - Ball.r - paddleplay.h - 1 - i*2*Ball.r, -VELOCITY, -VELOCITY)
+            ballplay = Ball(WIDTH//2 - i*2*Ball.r, HEIGH - Ball.r - paddleplay.h - 1 - i*2*Ball.r, -VELOCITY_X, -VELOCITY_Y)
             balls.append(ballplay)
 
         bricks = level(bricks_row, bricks_col)
@@ -530,7 +538,7 @@ while not FINAL_END:
                 num_balls = nop
                 
         for i in range(num_balls):
-            ballplay = Ball(WIDTH//2 - i*2*Ball.r, HEIGH - Ball.r - paddleplay.h - 1 - i*2*Ball.r, -VELOCITY, -VELOCITY)
+            ballplay = Ball(WIDTH//2 - i*2*Ball.r, HEIGH - Ball.r - paddleplay.h - 1 - i*2*Ball.r, -VELOCITY_X, -VELOCITY_Y)
             balls.append(ballplay)
         
         bricks = level(3, 5)
