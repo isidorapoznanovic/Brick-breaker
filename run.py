@@ -326,7 +326,6 @@ class Ball:
             if tempy > HEIGH:
                 global END
                 END = True
-                print("Poraz")
         
         #collision with bricks
         if(len(bricks) != 0):
@@ -343,7 +342,6 @@ class Ball:
             END = True
             global WIN
             WIN = True
-            print("Pobeda")
 
         #collision with balls
         for i in range(num_balls):
@@ -394,7 +392,7 @@ class Brick:
 parser = argparse.ArgumentParser(prog='PROG')
 
 group = parser.add_mutually_exclusive_group()
-arg = group.add_argument('-g', action='store_true')
+arg = group.add_argument('-g', action='store_true', help='Graphic environment')
 group.add_argument('-balls', type=int, default=1, help='Number of balls')
 
 group1 = parser.add_mutually_exclusive_group()
@@ -405,7 +403,7 @@ group2 = parser.add_mutually_exclusive_group()
 group2._group_actions.append(arg)
 group2.add_argument('-cols', type=int, default=5, help="Number of collumns")
 
-parser.add_argument('-r', action='store_true')
+parser.add_argument('-r', action='store_true', help='Random velocities')
 
 args = parser.parse_args()
 
@@ -583,12 +581,18 @@ while not FINAL_END:
         paddleplay.update()
 
         for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_i:
-                        if(len(bricks) > 1):
-                            bricks[len(bricks)-1].show_and_update(bg_color)
-                            bricks.pop()
-
+            if event.type == pygame.QUIT:
+                END = True
+                FINAL_END = True
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_i:
+                    if(len(bricks) > 1):
+                        bricks[len(bricks)-1].show_and_update(bg_color)
+                        bricks.pop()
+    if WIN == True:
+        print("You won!")
+    else:
+        print("You lose...")
     if args.g:
         while scene3:
             for event in pygame.event.get():
