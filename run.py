@@ -2,6 +2,8 @@ import pygame
 import math
 import NANS_lib as lb
 import numpy as np
+import argparse
+import time
 
 #VARIABLRS
 WIDTH = 1000
@@ -13,6 +15,8 @@ FRAMERATE = 400
 PADDLEW = 100
 PADDLEH = 20
 END = False
+WIN = False
+FINAL_END = False
 BRICKH = 50
 BRICKW = 120
 
@@ -155,7 +159,6 @@ def calculate_velocity(x1, y1, x2, y2, vx, vy, p, w, h):  #x1, y1 je krug
 #TODO spoji ifove
 def calculate_velocity_ball_ball(ball1, ball2):
     temp = ball1.vx
-    print(ball1.x, ball2.x,ball1.y,ball2.y)
     if ball1.x < ball2.x and ball1.y < ball2.y:
         if ball1.vx*ball1.vy < 0:
             ball1.vx = np.sign(ball1.vx)*abs(ball1.vy)
@@ -193,10 +196,8 @@ def calculate_velocity_ball_ball(ball1, ball2):
             ball1.vy = -np.sign(ball1.vy)*abs(temp)
             return ball1.vx, ball1.vy
     elif ball1.x == ball2.x:
-       # ball1.vy = -ball1.vy
         return temp, -ball1.vy
     elif ball1.y == ball2.y:
-        #ball1.vx = -ball1.vx
         return -ball1.vx, ball1.vy
     else:
         print('kako')
@@ -228,6 +229,63 @@ def spaceBricks(bricks):
             miny = bricks[i].y
 
     return minx, maxx, miny, maxy
+
+#functions for graphics
+
+pygame.init()
+
+display = pygame.display.set_mode((WIDTH, HEIGH))
+clock = pygame.time.Clock()
+
+font = pygame.font.SysFont('arial', 48)
+font1 = pygame.font.SysFont('arial', 32)
+
+color_active = pygame.Color('white')
+color_passive = pygame.Color('gray30')
+color = color_passive
+
+three_pl_rect = pygame.Rect(200, 200, 140, 64)
+four_pl_rect = pygame.Rect(350, 200, 140, 64)
+five_pl_rect = pygame.Rect(500, 200, 140, 64)
+six_pl_rect = pygame.Rect(650, 200, 140, 64)
+color1 = [color_passive, color_passive, color_passive, color_passive]
+
+
+def welcome():
+	welcome_text1 = font.render("     Welcome to", True, (255, 255, 255))
+	display.blit(welcome_text1, (300, 130))
+	welcome_text2 = font.render("brick breaker", True, (255, 255, 255))
+	display.blit(welcome_text2, (350, 180))
+	welcome_text3 = font1.render("      Press enter to play!", True, (255, 255, 255))
+	display.blit(welcome_text3, (300, 400))
+
+def num_of_balls():
+	num_of_balls_text = font.render("Select number of balls", True, (255, 255, 255))
+	display.blit(num_of_balls_text, (270, 130))
+
+def pl_choice():
+	three_pl_text = font.render("    1", True, (255, 255, 255))
+	display.blit(three_pl_text, (205, 205))
+	pygame.draw.rect(display, color1[0], three_pl_rect, 2)
+	four_pl_text = font.render("    2", True, (255, 255, 255))
+	display.blit(four_pl_text, (355, 205))
+	pygame.draw.rect(display, color1[1], four_pl_rect, 2)
+	five_pl_text = font.render("    3", True, (255, 255, 255))
+	display.blit(five_pl_text, (505, 205))
+	pygame.draw.rect(display, color1[2], five_pl_rect, 2)
+	six_pl_text = font.render("    4", True, (255, 255, 255))
+	display.blit(six_pl_text, (655, 205))
+	pygame.draw.rect(display, color1[3], six_pl_rect, 2)
+
+def goodbye(b):
+    if b == True:
+	    welcome_text1 = font.render(" You won!", True, (255, 255, 255))
+	    display.blit(welcome_text1, (370, 180))
+    else:
+	    welcome_text2 = font.render("   You lose...", True, (255, 255, 255))
+	    display.blit(welcome_text2, (350, 180))
+    welcome_text3 = font1.render("    Press enter to play again or q to quit!", True, (255, 255, 255))
+    display.blit(welcome_text3, (220, 400))
 
 #define classes
 class Ball:
@@ -281,6 +339,8 @@ class Ball:
                         break
         else:
             END = True
+            global WIN
+            WIN = True
             print("Pobeda")
 
         #collision with balls
@@ -328,60 +388,218 @@ class Brick:
         pygame.draw.rect(display, color, pygame.Rect((self.x, self.y), (self.w, self.h)))
 
 #parameters
-print("Enter number of balls:")
-num_balls = input()
-num_balls = int(num_balls)
 
-print("Enter number of bricks in the row (1-7)")
-bricks_row = int(input())
-print("Enter number of bricks in the column (1-8)")
-bricks_col = int(input())
+parser = argparse.ArgumentParser(prog='PROG')
+
+g1 = parser.add_mutually_exclusive_group()
+arg_a = g1.add_argument('-g', action='store_true')
+g1.add_argument('-balls', type=int, default=1, help='Number of balls')
+
+g2 = parser.add_mutually_exclusive_group()
+g2.add_argument('-rows', type=int, default=4, help="Number of rows")
+g2._group_actions.append(arg_a)
+
+g3 = parser.add_mutually_exclusive_group()
+g3.add_argument('-cols', type=int, default=5, help="Number of collumns")
+g3._group_actions.append(arg_a)
+
+args = parser.parse_args()
 
 #create objects
-paddleplay = Paddle(WIDTH//2)
 
-balls = []
-for i in range(num_balls):
-    ballplay = Ball(WIDTH//2 - i*2*Ball.r, HEIGH - Ball.r - paddleplay.h - 1 - i*2*Ball.r, -VELOCITY, -VELOCITY)
-    balls.append(ballplay)
+scene1 = True
+scene2 = True
+while not FINAL_END:
+    END = False
+    WIN = False
+    paddleplay = Paddle(WIDTH//2)
 
-bricks = level(bricks_row, bricks_col)
+    balls = []
+    if not args.g:
+        num_balls = args.balls
+        bricks_row = args.rows
+        bricks_col = args.cols
+
+        for i in range(num_balls):
+            ballplay = Ball(WIDTH//2 - i*2*Ball.r, HEIGH - Ball.r - paddleplay.h - 1 - i*2*Ball.r, -VELOCITY, -VELOCITY)
+            balls.append(ballplay)
+
+        bricks = level(bricks_row, bricks_col)
 
 #Draw scenario
-pygame.init()
 
-display = pygame.display.set_mode((WIDTH, HEIGH))
+    pygame.init()
 
-fg_color = pygame.Color("white")
-bg_color = pygame.Color("black")
+    if args.g:
+        while scene1:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    scene1 = False
 
-pygame.draw.rect(display, fg_color, pygame.Rect((0,0), (WIDTH, BORDER)))
-pygame.draw.rect(display, fg_color, pygame.Rect((0,0), (BORDER, HEIGH - PADDLEH)))
-pygame.draw.rect(display, fg_color, pygame.Rect((WIDTH - BORDER, 0), (BORDER, HEIGH - PADDLEH)))
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        scene1 = False
 
-for i in range(num_balls):
-    balls[i].show(fg_color)
+            display.fill((0, 100, 200))
+            welcome()
+            clock.tick(30)
+            pygame.display.update()
 
-paddleplay.show(fg_color)
+        nop = 0
+        k = -1
 
-for i in range(len(bricks)):
-    bricks[i].show_and_update(fg_color)
+        while scene2:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    scene2 = False
 
-clock = pygame.time.Clock()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_DOWN:
+                        color1[0] = color_active
+                        k = 0
+                    if k in [1, 2]:
+                        if event.key == pygame.K_RETURN:
+                            scene2 = False
+                            nop = k + 1
+                        if event.key == pygame.K_LEFT:
+                            color1[k] = color_passive
+                            k -= 1
+                            color1[k] = color_active
+                        if event.key == pygame.K_RIGHT:
+                            color1[k] = color_passive
+                            k += 1
+                            color1[k] = color_active				
+                    elif k == 0:
+                        if event.key == pygame.K_RETURN:
+                            scene2 = False
+                            nop = k + 1
+                        if event.key == pygame.K_RIGHT:
+                            color1[k] = color_passive
+                            k += 1
+                            color1[k] = color_active
+                    elif k == 3:
+                        if event.key == pygame.K_RETURN:
+                            scene2 = False
+                            nop = k + 1
+                        if event.key == pygame.K_LEFT:
+                            color1[k] = color_passive
+                            k -= 1
+                            color1[k] = color_active			
 
-while not END:
-    e = pygame.event.poll()
-    if e.type == pygame.QUIT:
-        break
+                if event.type == pygame.MOUSEBUTTONDOWN:	
+                        
+                    if three_pl_rect.collidepoint(event.pos):
+                        color1[0] = color_active
+                        color1[1] = color_passive
+                        color1[2] = color_passive
+                        color1[3] = color_passive
+                        scene2 = False
+                        nop = 1
 
-    clock.tick(FRAMERATE)
+                    if four_pl_rect.collidepoint(event.pos):
+                        color1[1] = color_active
+                        color1[0] = color_passive
+                        color1[2] = color_passive
+                        color1[3] = color_passive
+                        scene2 = False
+                        nop = 2
 
-    pygame.display.flip()
+                    if five_pl_rect.collidepoint(event.pos):
+                        color1[2] = color_active
+                        color1[0] = color_passive
+                        color1[1] = color_passive
+                        color1[3] = color_passive
+                        scene2 = False
+                        nop = 3
+
+                    if six_pl_rect.collidepoint(event.pos):
+                        color1[3] = color_active
+                        color1[0] = color_passive
+                        color1[1] = color_passive
+                        color1[2] = color_passive
+                        scene2 = False
+                        nop = 4
+
+            display.fill((0, 100, 200))
+            num_of_balls()
+            pl_choice()
+            clock.tick(30)
+            pygame.display.update()
+            if nop != 0:
+                time.sleep(0.3)
+                num_balls = nop
+                
+        for i in range(num_balls):
+            ballplay = Ball(WIDTH//2 - i*2*Ball.r, HEIGH - Ball.r - paddleplay.h - 1 - i*2*Ball.r, -VELOCITY, -VELOCITY)
+            balls.append(ballplay)
+        
+        bricks = level(3, 5)
+    else:
+        num_balls = args.balls
+        bricks_row = args.rows
+        bricks_col = args.cols
+
+    display.fill((0,0,0))
+    pygame.display.update()
+
+    fg_color = pygame.Color("white")
+    bg_color = pygame.Color("black")
+
+    pygame.draw.rect(display, fg_color, pygame.Rect((0,0), (WIDTH, BORDER)))
+    pygame.draw.rect(display, fg_color, pygame.Rect((0,0), (BORDER, HEIGH - PADDLEH)))
+    pygame.draw.rect(display, fg_color, pygame.Rect((WIDTH - BORDER, 0), (BORDER, HEIGH - PADDLEH)))
+
     for i in range(num_balls):
-        balls[i].update(paddleplay, bricks, balls)
-    for i in range(num_balls):
-        balls[i].repaint()   
-    paddleplay.update()
-    
+        balls[i].show(fg_color)
+
+    paddleplay.show(fg_color)
+
+    for i in range(len(bricks)):
+        bricks[i].show_and_update(fg_color)
+
+    clock = pygame.time.Clock()
+
+    scene3 = True
+    while not END:
+        e = pygame.event.poll()
+        if e.type == pygame.QUIT:
+            break
+
+        clock.tick(FRAMERATE)
+
+        pygame.display.flip()
+        for i in range(num_balls):
+            balls[i].update(paddleplay, bricks, balls)
+        for i in range(num_balls):
+            balls[i].repaint()   
+        paddleplay.update()
+
+        for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_i:
+                        if(len(bricks) > 1):
+                            bricks[len(bricks)-1].show_and_update(bg_color)
+                            bricks.pop()
+
+    if args.g:
+        while scene3:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    scene3 = False
+                    FINAL_END = True
+
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        scene3 = False
+                    if event.key == pygame.K_q:
+                        scene3 = False
+                        FINAL_END = True
+
+            display.fill((0, 100, 200))
+            goodbye(WIN)
+            clock.tick(30)
+            pygame.display.update()
+    else:
+        FINAL_END = True
 
 pygame.quit()
