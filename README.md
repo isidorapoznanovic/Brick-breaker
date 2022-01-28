@@ -32,3 +32,5 @@ If you would like to choose number of balls in graphic environment, and play aga
   ~~~
   
 For random velocities at start of a game, run game along with `-r` argument.
+
+![alt text](https://github.com/isidorapoznanovic/Brick-breaker/blob/master/2022-01-28_17-54.png)
