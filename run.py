@@ -106,12 +106,18 @@ def collision_ball_paddle(ball, paddle):
         return False, 0
 
 def collision_ball_ball(ball1, ball2):
+    '''
+    If a collision between balls occurs this function returns true, otherwise returns false
+    '''
     if np.sqrt((ball1.x - ball2.x)**2 + (ball1.y - ball2.y)**2 ) < ball1.r + ball2.r:
         return True
     else:
         return False
 
 def calculate_velocity(x1, y1, x2, y2, vx, vy, p, w, h):  #x1, y1 je krug
+    '''
+    Returns velocity of ball after collision with brick
+    '''
     if p == 1:
         return vx, -vy
     elif p == 2:
@@ -158,10 +164,13 @@ def calculate_velocity(x1, y1, x2, y2, vx, vy, p, w, h):  #x1, y1 je krug
         return -vy, -vx
 
     return vx, vy
-#TODO spoji ifove
+
 def calculate_velocity_ball_ball(ball1, ball2):
+    '''
+    Returns velocity of ball after collision with another ball
+    '''
     temp = ball1.vx
-    if ball1.x < ball2.x and ball1.y < ball2.y:
+    if (ball1.x < ball2.x and ball1.y < ball2.y) or (ball1.x > ball2.x and ball1.y > ball2.y):
         if ball1.vx*ball1.vy < 0:
             ball1.vx = np.sign(ball1.vx)*abs(ball1.vy)
             ball1.vy = np.sign(ball1.vy)*abs(temp)
@@ -170,28 +179,10 @@ def calculate_velocity_ball_ball(ball1, ball2):
             ball1.vx = -np.sign(ball1.vx)*abs(ball1.vy)
             ball1.vy = -np.sign(ball1.vy)*abs(temp)
             return ball1.vx, ball1.vy
-    elif ball1.x < ball2.x and ball1.y > ball2.y:
+    elif (ball1.x < ball2.x and ball1.y > ball2.y) or (ball1.x > ball2.x and ball1.y < ball2.y):
         if ball1.vx*ball1.vy > 0:
             ball1.vx = ball1.vy
             ball1.vy = temp
-            return ball1.vx, ball1.vy
-        else:
-            ball1.vx = -np.sign(ball1.vx)*abs(ball1.vy)
-            ball1.vy = -np.sign(ball1.vy)*abs(temp)
-            return ball1.vx, ball1.vy
-    elif ball1.x > ball2.x and ball1.y < ball2.y:
-        if ball1.vx*ball1.vy > 0:
-            ball1.vx = ball1.vy
-            ball1.vy = temp
-            return ball1.vx, ball1.vy
-        else:
-            ball1.vx = -np.sign(ball1.vx)*abs(ball1.vy)
-            ball1.vy = -np.sign(ball1.vy)*abs(temp)
-            return ball1.vx, ball1.vy
-    elif ball1.x > ball2.x and ball1.y > ball2.y:
-        if ball1.vx*ball1.vy < 0:
-            ball1.vx = np.sign(ball1.vx)*abs(ball1.vy)
-            ball1.vy = np.sign(ball1.vy)*abs(temp)
             return ball1.vx, ball1.vy
         else:
             ball1.vx = -np.sign(ball1.vx)*abs(ball1.vy)
@@ -206,6 +197,9 @@ def calculate_velocity_ball_ball(ball1, ball2):
         return ball1.vx, ball1.vy
 
 def level(a, b):
+    '''
+    Returns list of axb bricks
+    '''
     list = []
     x = np.linspace(50, WIDTH - BORDER - BRICKW - 50, a)
     for j in range(b):
@@ -215,6 +209,9 @@ def level(a, b):
     return list
 
 def spaceBricks(bricks):
+    '''
+    Returns coordinats of rectangle for space partitioning
+    '''
     maxx = 0
     maxy = 0
     minx = WIDTH
@@ -589,10 +586,7 @@ while not FINAL_END:
                     if(len(bricks) > 1):
                         bricks[len(bricks)-1].show_and_update(bg_color)
                         bricks.pop()
-    if WIN == True:
-        print("You won!")
-    else:
-        print("You lose...")
+
     if args.g:
         while scene3:
             for event in pygame.event.get():
@@ -613,5 +607,9 @@ while not FINAL_END:
             pygame.display.update()
     else:
         FINAL_END = True
+        if WIN == True:
+            print("You won!")
+        else:
+            print("You lose...")
 
 pygame.quit()
